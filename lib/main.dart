@@ -132,7 +132,6 @@ class _MyAppState extends State<MyApp> {
   dynamic conectoEnvioDisconect(WifiNetwork wifiSelect) async {
     //WiFiForIoTPlugin.disconnect();
   WifiConfiguration.connectToWifi(wifiSelect.ssid);
-
     conectoAnterior();
   }
 
