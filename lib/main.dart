@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'dart:io' show Platform;
 
-import 'package:wifiproyect/services/serviceWifi.dart';
 const String STA_DEFAULT_SSID = "STA_SSID";
 const String STA_DEFAULT_PASSWORD = "STA_PASSWORD";
 const NetworkSecurity STA_DEFAULT_SECURITY = NetworkSecurity.WPA;
@@ -18,17 +17,16 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  List<WifiNetwork> _listwifi = [];
+  List<WifiNetwork> _listwifi;
   Timer _timer;
   List<WifiNetwork> sinlimp;
   String version;
   String _ssidactual;
   @override
   void initState() {
-    print("ES ANDORID??" + Platform.isAndroid.toString());
     cargaLista();
-    do{_initializeTimer();}while(_listwifi == []);
-    
+    _initializeTimer();
+
     super.initState();
     cargaLista();
   }
@@ -41,12 +39,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<List<WifiNetwork>> getConnectionState() async {
-    var listAvailableWifi = await WiFiForIoTPlugin.loadWifiList();
-    return listAvailableWifi;
+     List<WifiNetwork> htResultNetwork;
+      htResultNetwork = await WiFiForIoTPlugin.loadWifiList();
+    return htResultNetwork;
   }
 
   @override
   Widget build(BuildContext context) {
+    //      Future.delayed(Duration(seconds: 5));
+
     return MaterialApp(
         home: Scaffold(
       appBar: AppBar(
@@ -61,8 +62,9 @@ class _MyAppState extends State<MyApp> {
         title: const Text('busqueda wifis'),
       ),
       body: ListView.builder(
-          itemCount: 0 == _listwifi.length ? 1 : _listwifi.length,
-          itemBuilder: (0 == _listwifi.length)
+          itemCount: null == _listwifi ? 0 : _listwifi.length,
+          itemBuilder:
+              /* (0 == _listwifi.length)
               ? (contex, index) {
                   return Container(
                     child: Padding(
@@ -79,30 +81,31 @@ class _MyAppState extends State<MyApp> {
                     ),
                   );
                 }
-              : (contex, index) {
-                  WifiNetwork listalowifi = _listwifi[index];
-                  /*  (listalowifi.startsWith("STECH"))? */
-                  return InkWell(
-                      onTap: () {
-                        dameSSID();
-                        conectoEnvioDisconect(listalowifi);
-                      },
-                      child: Card(
-                          shadowColor: Colors.black,
-                          elevation: 10.0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30.0),
-                          ),
-                          child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Text(listalowifi.ssid),
-                                  ]))));
-                }),
+              : */
+              (contex, index) {
+            WifiNetwork listalowifi = _listwifi[index];
+            /*  (listalowifi.startsWith("STECH"))? */
+            return InkWell(
+                onTap: () {
+                  dameSSID();
+                  conectoEnvioDisconect(listalowifi);
+                },
+                child: Card(
+                    shadowColor: Colors.black,
+                    elevation: 10.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                    ),
+                    child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(listalowifi.ssid),
+                            ]))));
+          }),
     ));
   }
 
@@ -113,15 +116,19 @@ class _MyAppState extends State<MyApp> {
     print("EL ACTUAL" + _ssidactual);
   }
 
-  void cargaLista() {
-    _listwifi.clear();
-    setState(() {
-      getConnectionState().then((value) {
-        sinlimp = value;
-      });
+  void cargaLista() async{
+    (_listwifi != null)
+        ? _listwifi.clear()
+        : print("Vacia");
+
+              sinlimp = await getConnectionState();
+              setState(() {});
+              
+            
+   
+
+    if (sinlimp != null&&sinlimp!=0) {
       print("CARGADO");
-    });
-    if (sinlimp != null) {
       for (int i = 0; i < sinlimp.length; i++) {
         if (sinlimp[i].ssid != "" && (sinlimp[i].ssid).startsWith("STECH"))
           _listwifi.add(sinlimp[i]);
@@ -131,14 +138,14 @@ class _MyAppState extends State<MyApp> {
 
   dynamic conectoEnvioDisconect(WifiNetwork wifiSelect) async {
     //WiFiForIoTPlugin.disconnect();
-  WifiConfiguration.connectToWifi(wifiSelect.ssid);
+    WiFiForIoTPlugin.connect(wifiSelect.ssid);
     conectoAnterior();
   }
 
   dynamic conectoAnterior() async {
     await Future.delayed(Duration(seconds: 10));
-   // WiFiForIoTPlugin.disconnect();
-    WifiConfiguration.connectToWifi(_ssidactual);
+    // WiFiForIoTPlugin.disconnect();
+    WiFiForIoTPlugin.connect(_ssidactual);
   }
 
   /*  List<dynamic> armaLista(List<dynamic> _listwifi) {
@@ -158,4 +165,3 @@ class _MyAppState extends State<MyApp> {
     });
   } */
 }
-
