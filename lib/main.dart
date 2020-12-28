@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'dart:io' show Platform;
 
@@ -17,9 +18,9 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  List<WifiNetwork> _listwifi;
+  List<WifiNetwork> _listwifi=[];
   Timer _timer;
-  List<WifiNetwork> sinlimp;
+  List<WifiNetwork> sinlimp=[];
   String version;
   String _ssidactual;
   @override
@@ -28,19 +29,23 @@ class _MyAppState extends State<MyApp> {
     _initializeTimer();
 
     super.initState();
-    cargaLista();
   }
 
   void _initializeTimer() {
     if (_timer != null) {
       _timer.cancel();
     }
-    _timer = Timer(const Duration(seconds: 2), initState);
+    _timer = Timer(const Duration(seconds: 4), initState);
   }
 
-  Future<List<WifiNetwork>> getConnectionState() async {
-     List<WifiNetwork> htResultNetwork;
+  Future<List<WifiNetwork>> loadWifiLista() async {
+    List<WifiNetwork> htResultNetwork;
+    try {
       htResultNetwork = await WiFiForIoTPlugin.loadWifiList();
+      print(htResultNetwork);
+    } on PlatformException {
+      htResultNetwork = List<WifiNetwork>();
+    }
     return htResultNetwork;
   }
 
@@ -54,8 +59,9 @@ class _MyAppState extends State<MyApp> {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.update),
-            onPressed: () {
-              initState();
+            onPressed: () async {
+              cargaLista();
+              setState(() {});
             },
           )
         ],
@@ -116,18 +122,12 @@ class _MyAppState extends State<MyApp> {
     print("EL ACTUAL" + _ssidactual);
   }
 
-  void cargaLista() async{
-    (_listwifi != null)
-        ? _listwifi.clear()
-        : print("Vacia");
-
-              sinlimp = await getConnectionState();
-              setState(() {});
-              
-            
-   
-
-    if (sinlimp != null&&sinlimp!=0) {
+  void cargaLista() async {
+    
+    sinlimp = await loadWifiLista();
+      setState(() {});
+     if (_listwifi != null)_listwifi.clear() ;
+    if (sinlimp != null) {
       print("CARGADO");
       for (int i = 0; i < sinlimp.length; i++) {
         if (sinlimp[i].ssid != "" && (sinlimp[i].ssid).startsWith("STECH"))
@@ -137,14 +137,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   dynamic conectoEnvioDisconect(WifiNetwork wifiSelect) async {
-    //WiFiForIoTPlugin.disconnect();
-    WiFiForIoTPlugin.connect(wifiSelect.ssid);
+ //  WiFiForIoTPlugin.disconnect();
+ 
+    WiFiForIoTPlugin.connect(wifiSelect.bssid);
     conectoAnterior();
   }
 
   dynamic conectoAnterior() async {
     await Future.delayed(Duration(seconds: 10));
-    // WiFiForIoTPlugin.disconnect();
+   // WiFiForIoTPlugin.disconnect();
     WiFiForIoTPlugin.connect(_ssidactual);
   }
 
